@@ -1,0 +1,53 @@
+services:
+  db:
+    build:
+      context: ./db
+    ports:
+      - 15432:5432
+    environment:
+    - POSTGRES_PASSWORD=password
+    - POSTGRES_DB=hub
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "hub"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  migrate:
+    build:
+      context: ./migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./hub/database/migrations:/migrations
+    working_dir: /migrations
+    environment:
+      TERN_CONF: /app/db.conf
+    entrypoint: ./migrate.sh
+
+  server:
+    build:
+      context: ./hub
+      dockerfile: ./cmd/hub/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - 8000:8000
+    volumes:
+      - ./server/hub.yaml:/artifacthub/.cfg/hub.yaml
+
+  tracker:
+    build:
+      context: ./hub
+      dockerfile: ./cmd/tracker/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./tracker/tracker.yaml:/artifacthub/.cfg/tracker.yaml

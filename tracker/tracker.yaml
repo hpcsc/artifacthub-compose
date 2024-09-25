@@ -1,0 +1,17 @@
+log:
+  level: debug
+  pretty: true
+db:
+  host: db
+  port: "5432"
+  database: hub
+  user: postgres
+  password: password
+tracker:
+  concurrency: 1
+  repositoriesNames: []
+  repositoriesKinds: []
+  bypassDigestCheck: false
+  categoryModelPath: ./ml/category/model
+images:
+  store: pg
